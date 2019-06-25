@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <script src="https://code.jquery.com/jquery-3.4.1.js"></script>
+  
+  <title>Bulk QR Code Generation</title>
+  <style>
+    body { height: 100vh; margin: 0; justify-content: center; align-items: center; display: flex; font-family: sans-serif; }
+    #main-form { margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px dotted #ddd; }
+    .input { margin: 12px 0; }
+    .input label { display: block; margin-bottom: 4px; }
+
+  </style>
+</head>
+<body>
+  <div>
+    <h1>Bulk QR Code Generation</h1>
+    <form id="main-form">
+      <div class="inputs">
+        <div class="input">
+          <label>Data (.csv)</label>
+          <input required type="file" accept="text/csv" id="data">
+        </div>
+        <div class="input">
+          <label>Foreground (pick a dark color)</label>
+          <input type="color" value="#000000" id="fg-color">
+        </div>
+        <div class="input">
+          <label>Background (pick a light color)</label>
+          <input type="color" value="#ffffff" id="bg-color">
+        </div>
+        <div class="input">
+          <label>Logo (optional)</label>
+          <input type="file" accept="image/png" id="logo">
+        </div>
+        <input type="submit" value="Generate">
+      </div>
+    </form>
+    <div id="progress">Fill the above form to start processing.</div>
+    <a href="#" style="display: none" download id="download">Download the QR Codes!</a>
+  </div>
+</body>
+
+<script>
+  let id = null;
+  $("#main-form").on('submit', function(e) {
+    e.preventDefault();
+    const fd = new FormData;
+    fd.append('data', $("#data")[0].files[0]);
+    fd.append('logo', $("#logo")[0].files[0]);
+    fd.append('foreground', $("#fg-color").val())
+    fd.append('background', $("#bg-color").val())
+
+    $.ajax({
+      url: '/jobs',
+      data: fd,
+      processData: false,
+      contentType: false,
+      type: "POST",
+      success: function(response) {
+        id = response.id;
+        $("#main-form").slideUp();
+        updateStatus();
+      }
+    });
+  });
+  
+  function updateStatus() {
+    $.getJSON('/jobs/' + id, function(stats) {
+      if (stats.ready) {
+        $("#progress").text("Done!");
+        $("#download").attr('href', '/jobs/' + id + '/archive.zip');
+        $("#download").show()
+        $("#download").on('click', () => window.location.reload);
+      } else {
+        $("#progress").text(`Processed ${stats.completed} of ${stats.total} codes!`);
+        setTimeout(updateStatus, 200);
+      }
+    })
+  }
+
+</script>
+</html>

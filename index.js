@@ -18,8 +18,10 @@ app.use(expressFileupload());
 const jobs = {};
 
 (async () => {
-	await rimraf('jobs', e=>{});
-	fs.mkdir('jobs').then(() => {}).catch(() => {});
+	try {
+		await fs.mkdir('jobs')
+	} catch(e) { }
+	await rimraf('jobs/*', e=>{});
 })();
 
 app.post('/jobs', (req, res) => {
@@ -51,8 +53,8 @@ app.get('/jobs/:id/archive.zip', async (req, res) => {
 
 	res.download(`jobs/${id}/archive.zip`);
 
-	rimraf(`jobs/${id}`);
 	delete jobs[id];
+	await rimraf(`jobs/${id}`);
 });
 
 app.listen(PORT, () => console.log(`Running on port ${PORT}!`))

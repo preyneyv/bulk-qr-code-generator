@@ -74,7 +74,7 @@
         $("#progress").text("Done!");
         $("#download").attr('href', '/jobs/' + id + '/archive.zip');
         $("#download").show()
-        $("#download").on('click', () => window.location.reload);
+        $("#download").on('click', () => window.location.reload());
       } else {
         $("#progress").text(`Processed ${stats.completed} of ${stats.total} codes!`);
         setTimeout(updateStatus, 200);
